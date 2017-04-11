@@ -1,0 +1,49 @@
+collect:
+  schedule:
+    crontab: 0 0 * * *
+  pipeline:
+    - run: add_metadata
+      parameters:
+        name: filtered-supermarket-prices
+        title: supermarket-prices
+    - run: add_resource
+      parameters:
+        name: chain-sources
+        url: file://sources.csv
+    - run: stream_remote_resources
+    - run: scrape_filenames
+    - run: scrape_xmls
+    - run: set_types
+    - run: join
+      parameters:
+        source:
+          name: chain-sources
+          key:
+            - chain
+            - timestamp
+            - ItemCode
+        target:
+          name: item-prices
+          key: null
+        fields:
+          timestamp: null
+          chain: null
+          item_code:
+            name: ItemCode
+          item_name:
+            name: ItemName
+          avg_price:
+            name: ItemPrice
+            aggregate: avg
+          num_branches:
+            aggregate: count
+    - run: dump.to_path
+      parameters:
+        out-path: prices/
+    - run: dump.to_sql
+      parameters:
+        tables:
+          prices:
+            resource-name: item-prices
+            mode: update
+            update_keys: [timestamp, chain, item_code]
