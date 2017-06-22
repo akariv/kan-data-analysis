@@ -1,4 +1,11 @@
-name,url,kind
-mega,http://publishprice.mega.co.il/,web-folder
-shufersal,http://prices.shufersal.co.il/,web-table
-bitan,https://info.ybitan.co.il/pirce_update,web-table
+name,url,kind,username,password
+freshmarket,https://url.retail.publishedprices.co.il/,cerebrus,freshmarket,
+yohananof,https://url.retail.publishedprices.co.il/,cerebrus,yohananof,
+hazihinam,https://url.retail.publishedprices.co.il/,cerebrus,HaziHinam,
+osherad,https://url.retail.publishedprices.co.il/,cerebrus,osherad,
+doralon,https://url.retail.publishedprices.co.il/,cerebrus,doralon,
+tivtaam,https://url.retail.publishedprices.co.il/,cerebrus,TivTaam,
+ramilevi,https://url.retail.publishedprices.co.il/,cerebrus,RamiLevi,
+mega,http://publishprice.mega.co.il/,web-folder,,
+shufersal,http://prices.shufersal.co.il/,web-table,,
+bitan,https://info.ybitan.co.il/pirce_update,web-table,,

@@ -11,9 +11,10 @@ from datapackage_pipelines.wrapper import ingest, spew
 
 parameters, datapackage, res_iter = ingest()
 
-
 link_re = re.compile('PriceFull([0-9]+)[-_]([0-9]+)[-_]([0-9]+)\.(?:gz|zip)')
 page_re = re.compile('page=([0-9]+)')
+
+CEREBRUS_FORM_DATA="sEcho=1&iColumns=5&sColumns=%2C%2C%2C%2C&iDisplayStart=0&iDisplayLength=9999&mDataProp_0=fname&sSearch_0=&bRegex_0=false&bSearchable_0=true&bSortable_0=true&mDataProp_1=type&sSearch_1=&bRegex_1=false&bSearchable_1=true&bSortable_1=false&mDataProp_2=size&sSearch_2=&bRegex_2=false&bSearchable_2=true&bSortable_2=true&mDataProp_3=ftime&sSearch_3=&bRegex_3=false&bSearchable_3=true&bSortable_3=true&mDataProp_4=&sSearch_4=&bRegex_4=false&bSearchable_4=true&bSortable_4=false&sSearch=&bRegex=false&iSortingCols=0&cd=%2F"
 
 def process_resource(sources):
 
@@ -21,7 +22,37 @@ def process_resource(sources):
 
     for src in sources:
         logging.info('%r', src)
-        if src['kind'] == 'web-folder':
+        if src['kind'] == 'cerebrus':
+            sess = requests.Session()
+            page = pq(sess.get(src['url'], verify = False).text)
+            csrftoken = pq(page.find('#csrftoken')).attr('value')
+            _ = sess.post(src['url']+'login/user',
+                          data={'csrftoken': csrftoken,
+                                'username': src['username'],
+                                'password': src['password'],
+                                'Submit': 'Sign in'
+                                }).text
+            data = sess.post(src['url']+'file/ajax_dir?'+CEREBRUS_FORM_DATA).json()
+            data = data['aaData']
+            logging.info('DATA %r', len(data))
+            for datum in data:
+                if datum['type'] != 'file':
+                    continue
+                href = datum['fname']
+                match = link_re.search(href)
+                if match:
+                    rec = dict(zip(
+                        ['chain', 'branch', 'timestamp'], match.groups()
+                    ))
+                    rec.update({
+                        'origin_url': src['url']+'file/d/',
+                        'url': href,
+                        'cookies': list(sess.cookies.items()),
+                        'chain_name': src['name']
+                    })
+                    yield rec
+
+        elif src['kind'] == 'web-folder':
             tried = set()
             urls = [src['url']]
             while len(urls) > 0:
@@ -101,6 +132,7 @@ def process_resource(sources):
 datapackage['resources'][0]['schema']['fields'] = [
     { 'name': 'origin_url', 'type': 'string'},
     { 'name': 'url', 'type': 'string'},
+    { 'name': 'cookies', 'type': 'array'},
     { 'name': 'chain_name', 'type': 'string'},
     { 'name': 'chain', 'type': 'string'},
     { 'name': 'branch', 'type': 'string'},

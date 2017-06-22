@@ -14,10 +14,10 @@ from datapackage_pipelines.wrapper import ingest, spew
 
 parameters, datapackage, res_iter = ingest()
 
-def get_data(url):
+def get_data(url, cookies):
   while True:
     try:
-      data = requests.get(url, verify=False).content
+      data = requests.get(url, verify=False, cookies=cookies).content
       return data
     except Exception as e:
       logging.error('Error in request %s: %s', url, e)
@@ -31,7 +31,7 @@ def process_resource(sources):
         url = src['url']
         url = urljoin(orig_url, url)
         if '.gz' in url:
-            data = get_data(url)
+            data = get_data(url, dict(src.get('cookies', [])))
             try:
               data = gzip.decompress(data)
             except OSError as e:
@@ -42,7 +42,7 @@ def process_resource(sources):
             else:
                 data = data.decode('utf-8-sig')
         else:
-            data = get_data(url)
+            data = get_data(url, dict(src.get('cookies', [])))
             data = zipfile.ZipFile(BytesIO(data))
             data = data.open(data.namelist()[0]).read()
             data = data.decode('windows-1255')
