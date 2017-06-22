@@ -28,10 +28,19 @@ collect:
         fields:
           timestamp: null
           chain: null
+          chain_name: null
           item_code:
             name: ItemCode
           item_name:
             name: ItemName
+          manufacturer_name:
+            name: ManufactureName
+          manufacturer_country:
+            name: ManufactureCountry
+          manufacturer_description:
+            name: ManufactureItemDescription
+          unit_of_measure:
+            name: UnitOfMeasure
           avg_price:
             name: ItemPrice
             aggregate: avg

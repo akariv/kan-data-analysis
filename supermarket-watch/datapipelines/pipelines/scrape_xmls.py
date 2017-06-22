@@ -37,7 +37,10 @@ def process_resource(sources):
             except OSError as e:
               logging.error('%s %r', e, data[:1000])
               continue
-            data = data.decode('utf-8-sig')
+            if b'windows-1255' in data[:1000]:
+                data = data.decode('windows-1255')
+            else:
+                data = data.decode('utf-8-sig')
         else:
             data = get_data(url)
             data = zipfile.ZipFile(BytesIO(data))
@@ -56,7 +59,10 @@ def process_resource(sources):
                     'ItemCode',
                     'ItemName',
                     'ManufactureName',
-                    'ItemPrice'
+                    'ItemPrice',
+                    'ManufactureCountry',
+                    'ManufactureItemDescription',
+                    'UnitOfMeasure',
                 ]
             ))
             yield rec
@@ -67,6 +73,9 @@ datapackage['resources'][0]['schema']['fields'].extend([
     { 'name': 'ItemName', 'type': 'string'},
     { 'name': 'ItemCode', 'type': 'string'},
     { 'name': 'ManufactureName', 'type': 'string'},
+    { 'name': 'ManufactureCountry', 'type': 'string'},
+    { 'name': 'ManufactureItemDescription', 'type': 'string'},
+    { 'name': 'UnitOfMeasure', 'type': 'string'},
     { 'name': 'ItemPrice', 'type': 'number'},
 ])
 

@@ -2,6 +2,7 @@ import logging
 import re
 import time
 import sys
+import os
 
 import requests
 from pyquery import PyQuery as pq
@@ -20,7 +21,44 @@ def process_resource(sources):
 
     for src in sources:
         logging.info('%r', src)
-        if src['kind'] == 'web-table':
+        if src['kind'] == 'web-folder':
+            tried = set()
+            urls = [src['url']]
+            while len(urls) > 0:
+                url = urls.pop(0)
+                if url in tried:
+                    continue
+                tried.add(url)
+                logging.info('Trying URL %s', url)
+                page = pq(requests.get(url, verify=False).text)
+                anchors = page.find('a')
+                for anchor in anchors:
+                    href = pq(anchor).attr('href')
+                    if href.startswith('/') or \
+                            href.startswith('?') or \
+                            href.startswith('#') or \
+                            href.startswith('..') or \
+                            '://' in href:
+                        continue
+                    match = link_re.search(href)
+                    if match:
+                        if href in tried:
+                            continue
+                        tried.add(href)
+                        rec = dict(zip(
+                            ['chain', 'branch', 'timestamp'], match.groups()
+                        ))
+                        rec.update({
+                            'origin_url': url,
+                            'url': href,
+                            'chain_name': src['name']
+                        })
+                        # logging.info('%r', rec)
+                        yield rec
+                    else:
+                        urls.append(os.path.join(url, href))
+
+        elif src['kind'] == 'web-table':
             page_num = 1
             max_page = 1
             while page_num <= max_page:
